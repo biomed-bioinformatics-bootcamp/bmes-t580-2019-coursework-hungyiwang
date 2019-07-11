@@ -9,31 +9,56 @@ def main():
 
     age_min, age_max = get_age_cutoff()
 
+    gender = get_gender_cutoff()
+
+    out_filename= filename+'.valid'
+
+
     num_pats = 0
 
     # Open file and start reader
-    with open(filename) as handle:
+    with open(filename, mode="r") as handle:
         reader = csv.DictReader(handle)
 
-        for row in reader:
-            pat_age = int(row['AGE'])
+        with open(out_filename, mode="w") as out_handle:
+            fields=['PAT_NUM','SEX','AGE','INFECTION_LENGTH','ON_THERAPY','COINFECTION']
+            writer = csv.DictWriter(out_handle, fields)
 
-            # Seperate out the long logic for clarity
-            match_age = (pat_age > age_min) and (pat_age < age_max)
+            writer.writeheader()
 
-            if match_age:
-                num_pats += 1
+            for row in reader:
+                pat_age = int(row['AGE'])
+                pat_gender = row['SEX']
+
+
+                # Seperate out the long logic for clarity
+                match_age = (pat_age > age_min) and (pat_age < age_max)
+
+                if match_age and pat_gender==gender:
+                    num_pats += 1
+                    writer.writerow(row)
 
     print('Based on the following criteria:')
     print(' - Age: [%i, %i]' % (age_min, age_max))
+    print(' - Sex: '+ gender)
 
     print('There are %i eligible patients' % num_pats)
 
 
 
+def get_gender_cutoff():
 
-
-
+    gender= None
+    while gender is None:
+        gender_inp = input('Which gender for the study? M/F? ')
+        if gender_inp.lower()=='m':
+            gender='Male'
+        elif gender_inp.lower()=='f':
+            gender='Female'
+        else:
+            print('It is a wrong typing.')
+            continue
+    return gender
 
 
 def print_the_header():
@@ -79,7 +104,9 @@ def get_age_cutoff():
         except ValueError:
             print(age_inp + ' is not a number. Please try again')
             continue
-
+        if age_max < age_min:
+            print('The oldest age is less than youngest age.')
+            age_max = None
     return age_min, age_max
 
 
